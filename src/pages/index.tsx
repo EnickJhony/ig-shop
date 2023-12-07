@@ -41,7 +41,7 @@ export default function Home({ products }: HomeProps) {
   )
 }
 
-export const getServerSideProps = async () => {
+export const getStaticProps = async () => {
   const response = await stripe.products.list({
     expand: ['data.default_price']
   })
@@ -52,7 +52,10 @@ export const getServerSideProps = async () => {
       id: products.id,
       name: products.name,
       imageUrl: products.images[0],
-      price: price.unit_amount! / 100
+      price: new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(price.unit_amount! / 100)
     }
   })
 
