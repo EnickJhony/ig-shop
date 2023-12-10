@@ -1,24 +1,68 @@
+import { stripe } from '@/lib/stripe'
 import {
   ImageContainer,
   ProductContainer,
   ProductDetails
 } from '@/styles/pages/product'
+import { GetServerSideProps } from 'next'
+import Image from 'next/image'
+import Stripe from 'stripe'
 
-export default function Product() {
+interface ProductProps {
+  product: {
+    id: string
+    name: string
+    imageUrl: string
+    price: string
+    description: string
+    defaultPriceId: string
+  }
+}
+
+export default function Product({ product }: ProductProps) {
   return (
     <ProductContainer>
-      <ImageContainer></ImageContainer>
+      <ImageContainer>
+        <Image src={product.imageUrl} alt="" width={520} height={480} />
+      </ImageContainer>
       <ProductDetails>
-        <h1>Camiseta x</h1>
-        <span>R$ 29,90</span>
-        <p>
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Dolor eaque
-          neque modi, minus molestias hic temporibus eos magni ratione alias
-          labore reiciendis, iste vero quae exercitationem obcaecati repudiandae
-          voluptatem! Voluptatum?
-        </p>
+        <h1>{product.name}</h1>
+        <span>{product.price}</span>
+        <p>{product.description}</p>
         <button>Comprar agora</button>
       </ProductDetails>
     </ProductContainer>
   )
+}
+
+// export const getStaticPaths: GetStaticPaths = async () => {
+//   return {
+//     paths: [{ params: { id: 'prod_PCPADiGqvIWVez' } }],
+//     fallback: false
+//   }
+// }
+
+export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+  const productID = String(params?.id)
+  const product = await stripe.products.retrieve(productID, {
+    expand: ['default_price']
+  })
+
+  const price = product.default_price as Stripe.Price
+
+  return {
+    props: {
+      product: {
+        id: product.id,
+        name: product.name,
+        imageUrl: product.images[0],
+        price: new Intl.NumberFormat('pt-BR', {
+          style: 'currency',
+          currency: 'BRL'
+        }).format(price.unit_amount! / 100),
+        description: product.description
+      }
+    }
+    // revalidate: 60 * 60 * 2
+  }
 }
