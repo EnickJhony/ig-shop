@@ -4,7 +4,7 @@ import {
   ProductContainer,
   ProductDetails
 } from '@/styles/pages/product'
-import { GetServerSideProps } from 'next'
+import { GetStaticPaths, GetStaticProps } from 'next'
 import Image from 'next/image'
 import Stripe from 'stripe'
 
@@ -35,14 +35,14 @@ export default function Product({ product }: ProductProps) {
   )
 }
 
-// export const getStaticPaths: GetStaticPaths = async () => {
-//   return {
-//     paths: [{ params: { id: 'prod_PCPADiGqvIWVez' } }],
-//     fallback: false
-//   }
-// }
+export const getStaticPaths: GetStaticPaths = async () => {
+  return {
+    paths: [{ params: { id: 'prod_PCPADiGqvIWVez' } }],
+    fallback: 'blocking'
+  }
+}
 
-export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+export const getStaticProps: GetStaticProps = async ({ params }) => {
   const productID = String(params?.id)
   const product = await stripe.products.retrieve(productID, {
     expand: ['default_price']
@@ -62,7 +62,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
         }).format(price.unit_amount! / 100),
         description: product.description
       }
-    }
-    // revalidate: 60 * 60 * 2
+    },
+    revalidate: 60 * 60 * 2
   }
 }
